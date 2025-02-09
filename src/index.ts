@@ -1,38 +1,27 @@
 import { createServer } from 'http';
-import { authRoutes } from './auth/auth.routes.ts';
-import { IncomingMessage, ServerResponse } from 'node:http';
+import { AuthController } from './auth/auth.controller.ts';
+import { AuthService } from './auth/auth.service.ts';
+import { TokenService } from './token/token.service.ts';
+import { Database } from './database/database.ts';
+import { JWT } from './utils/JWT.ts';
+import { Redis } from './redis/fake-redis.ts';
+import { UserService } from './user/user.service.ts';
 
-// Required Environment Variables
-const REQUIRED_ENV_VARS = [
-  'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
-  'SALT_ROUNDS', 'PORT',
-];
-
-// Function to Check Credentials Before Starting Server
-function checkEnvVariables() {
-  const missingVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
-  if (missingVars.length > 0) {
-    console.error(`Missing environment variables: ${missingVars.join(', ')}`);
-    process.exit(1);
-  }
+function createAuthController(): AuthController { // factory
+  const db = Database.getInstance();
+  return new AuthController(
+    new AuthService(
+      new UserService(db),
+      new TokenService(new JWT(process.env.JWT_ACCESS_SECRET!, process.env.JWT_REFRESH_SECRET!)),
+      new Redis(db)
+    )
+  );
 }
 
-// Check environment variables before starting the server
-checkEnvVariables();
+const authController = createAuthController();
 
-const server = createServer((req, res) => {
-  const { url, method } = req;
+const server = createServer((req, res) => authController.handleRequest(req, res));
 
-  if (method === 'POST' && url && url in authRoutes) { // Method POST hardcoded!!!
-    (authRoutes as Record<string, (req: IncomingMessage, res: ServerResponse) => void>)[url](req, res);
-  } else {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Not Found' }));
-  }
-});
-
-const PORT = process.env.PORT;
-server.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+server.listen(process.env.PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${process.env.PORT}`);
 });

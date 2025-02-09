@@ -1,30 +1,26 @@
 import { createHmac, timingSafeEqual } from 'crypto';
+import type { IJWT } from "../interfaces/IJWT.ts";
+import type { JWTPayload } from '../interfaces/JWTPayload.ts';
 
-export interface JWTPayload {
-  id: number;
-  username?: string;
-  exp?: number;
-}
-
-export class JWT {
+export class JWT implements IJWT {
   private algorithm: string;
-  private readonly accessSecret: string;
-  private readonly refreshSecret: string;
+  private readonly accessSecret: Buffer;
+  private readonly refreshSecret: Buffer;
 
   constructor(accessSecret: string, refreshSecret: string) {
-    this.accessSecret = accessSecret;
-    this.refreshSecret = refreshSecret;
+    this.accessSecret = Buffer.from(accessSecret, 'utf-8');
+    this.refreshSecret = Buffer.from(refreshSecret, 'utf-8');
     this.algorithm = 'sha256';
   }
 
   sign(payload: JWTPayload, isRefresh: boolean = false, expiresIn: number = 3600): string {
     const secret = isRefresh ? this.refreshSecret : this.accessSecret;
-    const header = Buffer.from(JSON.stringify({ alg: "HS256" })).toString('base64url');
-    const body = Buffer.from(
+    const header = this.base64Encode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+    const body = this.base64Encode(
       JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + expiresIn })
-    ).toString('base64url');
+    );
 
-    const signature = createHmac(this.algorithm, Buffer.from(secret, 'utf-8'))
+    const signature = createHmac(this.algorithm, secret)
       .update(`${header}.${body}`)
       .digest('base64url');
 
@@ -32,28 +28,44 @@ export class JWT {
   }
 
   verify(token: string, isRefresh: boolean = false): boolean {
-    if (!token.includes('.')) return false;
+    if (!token || token.split('.').length !== 3) return false;
 
     const secret = isRefresh ? this.refreshSecret : this.accessSecret;
-    const parts = token.split('.');
+    const [header, body, signature] = token.split('.');
 
-    if (parts.length !== 3) return false;
+    try {
+      const expectedSignature = createHmac(this.algorithm, secret)
+        .update(`${header}.${body}`)
+        .digest('base64url');
 
-    const [header, body, signature] = parts;
-
-    const expectedSignature = createHmac(this.algorithm, Buffer.from(secret, 'utf-8'))
-      .update(`${header}.${body}`)
-      .digest('base64url');
-
-    return timingSafeEqual(Buffer.from(signature, 'utf-8'), Buffer.from(expectedSignature, 'utf-8'));
+      return this.safeCompare(signature, expectedSignature);
+    } catch {
+      return false;
+    }
   }
 
-  decode(token: string): JWTPayload | null {
+  decode<T>(token: string): T | null {
     try {
-      const [_, body] = token.split('.');
-      return JSON.parse(Buffer.from(body, 'base64url').toString()) as JWTPayload;
+      const [, body] = token.split('.');
+      return JSON.parse(this.base64Decode(body)) as T;
     } catch {
       return null;
     }
+  }
+
+  private base64Encode(data: string): string {
+    return Buffer.from(data).toString('base64url');
+  }
+
+  private base64Decode(data: string): string {
+    return Buffer.from(data, 'base64url').toString();
+  }
+
+  private safeCompare(a: string, b: string): boolean {
+    const bufA = Buffer.from(a, 'utf-8');
+    const bufB = Buffer.from(b, 'utf-8');
+
+    if (bufA.length !== bufB.length) return false;
+    return timingSafeEqual(bufA, bufB);
   }
 }

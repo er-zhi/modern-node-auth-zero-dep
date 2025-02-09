@@ -8,7 +8,8 @@
     "base": "node --env-file .env",
     "start": "npm run base src/index.ts",
     "dev": "node --watch --env-file .env src/index.ts",
-    "test": "npm run base src/auth/auth.test.ts",
+    "test": "npm run base src/tests/unit/run.ts",
+    "test:e2e": "npm run base src/tests/e2e/auth.e2e-test.ts",
     "migrate": "npm run base src/scripts/migrate.ts",
     "seed": "npm run base src/scripts/seed.ts"
   },

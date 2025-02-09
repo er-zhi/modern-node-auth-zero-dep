@@ -1,24 +1,21 @@
-import { Database } from '../database/database.ts';
+import type { IDatabase, IRedis } from '../interfaces/index.ts';
 
-export class Redis {
-  private db = Database.getInstance();
+export class Redis implements IRedis {
+  private db: IDatabase;
 
-  constructor() {
-    this.startCleanupJob(); // fake cron job
+  constructor(db: IDatabase) {
+    this.db = db;
+    this.startCleanupJob();
   }
 
-  set(key: string, value: string, ttlSeconds: number) {
+  set(key: string, value: string, ttlSeconds: number = 600): void {
     const expiresAt = Math.floor(Date.now() / 1000) + ttlSeconds;
-    try {
-      const stmt = this.db.prepare(`
-        INSERT INTO redis_store (key, value, expires_at) 
+    const stmt = this.db.prepare(`
+        INSERT INTO redis_store (key, value, expires_at)
         VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at
-      `);
-      stmt.run(key, value, expiresAt);
-    } catch (error) {
-      console.error(`Redis Fallback: Failed to set key ${key}`, error);
-    }
+    `);
+    stmt.run(key, value, expiresAt);
   }
 
   get(key: string): string | null {
@@ -27,12 +24,12 @@ export class Redis {
       const row = stmt.get(key) as { value: string; expires_at: number } | undefined;
 
       if (!row || row.expires_at < Math.floor(Date.now() / 1000)) {
-        this.del(key); // Auto delete expired keys
+        this.del(key); // Auto-delete expired keys
         return null;
       }
       return row.value;
     } catch (error) {
-      console.error(`Redis Fallback: Failed to get key ${key}`, error);
+      console.error(`Redis Error: Failed to get key "${key}"`, error);
       return null;
     }
   }
@@ -40,24 +37,21 @@ export class Redis {
   del(key: string): boolean {
     try {
       const stmt = this.db.prepare('DELETE FROM redis_store WHERE key = ?');
-      const result = stmt.run(key);
-      return result.changes > 0;
+      return stmt.run(key).changes > 0;
     } catch (error) {
-      console.error(`Redis Fallback: Failed to delete key ${key}`, error);
+      console.error(`Redis Error: Failed to delete key "${key}"`, error);
       return false;
     }
   }
 
-  // Cleanup Job: Remove Expired Keys Every 5 Minutes
   private startCleanupJob() {
     setInterval(() => {
       try {
         const stmt = this.db.prepare('DELETE FROM redis_store WHERE expires_at < ?');
         stmt.run(Math.floor(Date.now() / 1000));
-        console.log('Redis Cleanup: Expired tokens removed.');
       } catch (error) {
-        console.error('Redis Fallback: Cleanup failed.', error);
+        console.error('Redis Cleanup Error:', error);
       }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 5 * 60 * 1000);
   }
 }
