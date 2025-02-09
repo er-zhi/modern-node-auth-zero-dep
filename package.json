@@ -1,0 +1,25 @@
+{
+  "name": "modern-node-auth-zero-dep",
+  "version": "1.0.0",
+  "description": "**Modern Node.js Auth – Zero Dependencies 🚀**",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "base": "node --env-file .env",
+    "start": "npm run base src/index.ts",
+    "dev": "node --watch --env-file .env src/index.ts",
+    "test": "npm run base src/auth/auth.test.ts",
+    "migrate": "npm run base src/scripts/migrate.ts",
+    "seed": "npm run base src/scripts/seed.ts"
+  },
+  "keywords": [],
+  "author": "Erzhigit Imamov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/er-zhi/modern-node-auth-zero-dep/issues"
+  },
+  "homepage": "https://github.com/er-zhi/modern-node-auth-zero-dep#readme",
+  "dependencies": {
+    "@types/node": "^22.13.1"
+  }
+}
