@@ -1,3 +1,6 @@
+## Disclaimer: I just want to demonstrate what can be achieved with vanilla Node.js. This isn't necessarily the best approach—it's more of a proof of concept. The code could be better structured and written, but my goal isn't to reinvent the wheel or build my own framework. This is purely a practice exercise in working with JWT.
+
+
 **Modern Node.js Auth – Zero Dependencies 🚀**
 
 If you're **tired of dependency hell** and want a **modern, minimalistic** Node.js authentication system without external packages, this repo is for you!
@@ -20,6 +23,3 @@ If you're **tired of dependency hell** and want a **modern, minimalistic** Node.
 No bloated dependencies. Just **pure Node.js magic**. ✨
 
 📖 **[Read the article]()** for a step-by-step guide! 🚀
-
-
-## Disclaimer: I just want to show what you can do on vanilla node.js. I dont thing this is right way, just proof. code can be better written, and structured. But I dont tend to write my own framework   
