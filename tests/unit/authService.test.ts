@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { IAuthService, IRedis, ITokenService, IUserService, User } from '../../interfaces/index.ts';
-import { AuthService } from '../../auth/auth.service.ts';
+import { AuthService } from '../../src/auth/auth.service.ts';
+import { IUserService, User, ITokenService, IRedis, IAuthService } from '../../src/interfaces/index.ts';
 
 // ✅ Fixed `getUserById`: Added `password`
 const mockUserService: Partial<IUserService> = {

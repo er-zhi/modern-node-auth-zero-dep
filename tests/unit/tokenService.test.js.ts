@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { IJWT } from '../../interfaces/index.ts';
-import { TokenService } from '../../token/token.service.ts';
+import type { IJWT } from '../../src/interfaces/index.ts';
+import { TokenService } from '../../src/token/token.service.ts';
 
 /** ✅ Mock JWT Implementation */
 class MockJWT implements IJWT {

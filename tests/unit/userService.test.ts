@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import type { IDatabase } from '../../interfaces/index.ts';
-import { UserService } from '../../user/user.service.ts';
+import type { IDatabase } from '../../src/interfaces/index.ts';
+import { UserService } from '../../src/user/user.service.ts';
 
 /** ✅ Mock Database Implementation */
 class MockDatabase implements IDatabase {
